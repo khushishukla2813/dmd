@@ -4638,12 +4638,7 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     ax.push(s);
                     s = new AST.LinkDeclaration(linkloc, link, ax);
                 }
-                if (udas)
-                {
-                    auto ax = new AST.Dsymbols();
-                    ax.push(s);
-                    s = new AST.UserAttributeDeclaration(udas, ax);
-                }
+               
 
                 /* A template parameter list means it's a function template
                  */
@@ -4661,6 +4656,13 @@ class Parser(AST, Lexer = dmd.lexer.Lexer) : Lexer
                     decldefs.push(s);
                     auto tempdecl = new AST.TemplateDeclaration(loc, tplIdent, tpl, constraint, decldefs);
                     s = tempdecl;
+
+                    if (udas)
+                    {
+                        auto ax = new AST.Dsymbols();
+                        ax.push(s);
+                        s = new AST.UserAttributeDeclaration(udas, ax);
+                    }
 
                     STC stc2 = STC.none;
                     if (storage_class & STC.static_)
