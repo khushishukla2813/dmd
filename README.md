@@ -1,3 +1,4 @@
+<!-- bot test -->
 <div align="center">
 
 ![dlang logo](https://dlang.org/images/dlogo.png)
