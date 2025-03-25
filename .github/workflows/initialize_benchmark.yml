@@ -1,0 +1,86 @@
+name: Initialize Benchmark Data
+on:
+  workflow_dispatch:
+
+jobs:
+  initialize-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout dashboard-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: dashboard-pages
+          path: dashboard-pages-repo
+
+      - name: Create benchmark data directory
+        run: |
+          mkdir -p dashboard-pages-repo/benchmark_data
+          - name: Create sample history.json
+          run: |
+            cat > dashboard-pages-repo/benchmark_data/history.json << 'EOF'
+            [
+              {
+                "timestamp": "2025-03-12T14:00:00Z",
+                "pr": {
+                  "number": "1004",
+                  "title": "Added GC optimizations",
+                  "url": "https://github.com/dlang/dmd/pull/1004",
+                  "commit": "ghi789"
+                },
+                "metrics": {
+                  "pr_time": "9.500",
+                  "master_time": "9.850",
+                  "pr_memory": "154.2",
+                  "master_memory": "156.0",
+                  "time_diff": "-0.350",
+                  "time_pct": "-3.55%"
+                }
+              },
+              {
+                "timestamp": "2025-03-15T11:30:00Z",
+                "pr": {
+                  "number": "1005",
+                  "title": "Refactored semantic analysis",
+                  "url": "https://github.com/dlang/dmd/pull/1005",
+                  "commit": "jkl012"
+                },
+                "metrics": {
+                  "pr_time": "10.700",
+                  "master_time": "10.250",
+                  "pr_memory": "157.8",
+                  "master_memory": "156.4",
+                  "time_diff": "0.450",
+                  "time_pct": "4.39%"
+                }
+              },
+              {
+                "timestamp": "2025-03-18T16:45:00Z",
+                "pr": {
+                  "number": "1006",
+                  "title": "Improved inline assembly performance",
+                  "url": "https://github.com/dlang/dmd/pull/1006",
+                  "commit": "mno345"
+                },
+                "metrics": {
+                  "pr_time": "9.250",
+                  "master_time": "9.500",
+                  "pr_memory": "153.0",
+                  "master_memory": "154.2",
+                  "time_diff": "-0.250",
+                  "time_pct": "-2.63%"
+                }
+              }
+            ]
+            EOF
+  
+
+      - name: Commit and push changes
+        run: |
+          cd dashboard-pages-repo
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add benchmark_data/history.json
+          git commit -m "Initialize benchmark data with samples"
+          git push origin HEAD:dashboard-pages
