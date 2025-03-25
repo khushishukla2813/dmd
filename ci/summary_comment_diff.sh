@@ -23,8 +23,8 @@ fi
 
 # Start output
 echo "### 🔍 **Enhanced Build Statistics Diff**"
-echo "| Metric               | Old Value     | New Value     | Difference         |"
-echo "|---------------------|---------------|---------------|-------------------|"
+echo "| **Metric**           | **Old Value**  | **New Value**  | **Difference**        |"
+echo "|----------------------|----------------|----------------|-----------------------|"
 
 # Compare stats between OLD and NEW outputs
 while IFS= read -r new_line; do
@@ -42,13 +42,13 @@ while IFS= read -r new_line; do
     
     if [ -z "$old_line" ]; then
         # New stat added
-        echo "| $key            | ❌ Not available | ✅ $new_value | ➕ New Stat        |"
+        echo "| $key               | ❌ Not available | ✅ $new_value   | ➕ **New Stat**       |"
     else
         old_value=$(echo "$old_line" | cut -d'=' -f2-)
         if [ "$new_value" != "$old_value" ]; then
-            echo "| $key            | $old_value       | $new_value    | ⬆️ Changed         |"
+            echo "| $key               | $old_value      | $new_value    | ⬆️ **Changed**        |"
         else
-            echo "| $key            | $old_value       | $new_value    | ➖ No Change       |"
+            echo "| $key               | $old_value      | $new_value    | ➖ **No Change**      |"
         fi
     fi
 done < "$NEW_OUTPUT"
@@ -61,7 +61,7 @@ while IFS= read -r old_line; do
     key=$(echo "$old_line" | cut -d':' -f2 | cut -d'=' -f1)
     if ! grep -q "^STAT:${key}=" "$NEW_OUTPUT"; then
         old_value=$(echo "$old_line" | cut -d'=' -f2-)
-        echo "| $key            | $old_value       | ❌ Removed     | 🔥 Stat Removed    |"
+        echo "| $key               | $old_value      | ❌ Removed     | 🔥 **Stat Removed**    |"
     fi
 done < "$OLD_OUTPUT"
 
