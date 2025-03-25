@@ -1,3 +1,4 @@
+testing
 # Contributing to DMD, the D programming language reference compiler
 
 First off, thanks for your interest in contributing!
