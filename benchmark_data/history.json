@@ -1,0 +1,36 @@
+[
+  {
+    "timestamp": "2025-03-01T12:00:00Z",
+    "pr": {
+      "number": "4",
+      "title": "Initial Setup of Dashboard",
+      "url": "https://github.com/khushishukla2813/dmd/pull/4",
+      "commit": "abc123"
+    },
+    "metrics": {
+      "pr_time": "10.250",
+      "master_time": "10.500",
+      "pr_memory": "156.4",
+      "master_memory": "158.2",
+      "time_diff": "-0.250",
+      "time_pct": "-2.38%"
+    }
+  },
+  {
+    "timestamp": "2025-03-05T15:30:00Z",
+    "pr": {
+      "number": "3",
+      "title": "Performance Improvements in Lexer",
+      "url": "https://github.com/khushishukla2813/dmd/pull/3",
+      "commit": "def456"
+    },
+    "metrics": {
+      "pr_time": "9.800",
+      "master_time": "10.250",
+      "pr_memory": "155.8",
+      "master_memory": "156.4",
+      "time_diff": "-0.450",
+      "time_pct": "-4.39%"
+    }
+  }
+]
