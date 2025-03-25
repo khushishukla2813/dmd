@@ -60,7 +60,6 @@ jobs:
           echo "Build statistics:" >> NEW_OUTPUT.txt
           echo "" >> NEW_OUTPUT.txt
           echo "statistics (-before, +after):" >> NEW_OUTPUT.txt
-          # Example lines your scripts might produce:
           echo "STAT:executable size=5334536 bin/dub" >> NEW_OUTPUT.txt
           echo "STAT:rough build time=${runtime_sec}s ($RUNTIME ms)" >> NEW_OUTPUT.txt
           echo "" >> NEW_OUTPUT.txt
@@ -77,73 +76,64 @@ jobs:
             touch OLD_OUTPUT.txt
           fi
 
-      - name: Generate comment diff
+      - name: Generate concise comment
         run: |
-          # First, parse the old stats if they exist:
-          old_time=$(grep -oP '(?<=STAT:rough build time=)\d+(\.\d+)?(?=s)' OLD_OUTPUT.txt || echo "")
-          old_size=$(grep -oP '(?<=STAT:executable size=)\d+' OLD_OUTPUT.txt || echo "")
-          # If your script also logs deprecations/warnings, parse them:
-          old_deprecations=$(grep -oP '(?<=Total deprecations:)\d+' OLD_OUTPUT.txt || echo "")
-          old_warnings=$(grep -oP '(?<=Total warnings:)\d+' OLD_OUTPUT.txt || echo "")
-          # Same for new stats:
-          new_time=$(grep -oP '(?<=STAT:rough build time=)\d+(\.\d+)?(?=s)' NEW_OUTPUT.txt || echo "")
-          new_size=$(grep -oP '(?<=STAT:executable size=)\d+' NEW_OUTPUT.txt || echo "")
-          new_deprecations=$(grep -oP '(?<=Total deprecations:)\d+' NEW_OUTPUT.txt || echo "")
-          new_warnings=$(grep -oP '(?<=Total warnings:)\d+' NEW_OUTPUT.txt || echo "")
-          # Provide defaults if old values are missing
-          [ -z "$old_time" ] && old_time="0"
-          [ -z "$old_size" ] && old_size="0"
-          [ -z "$old_deprecations" ] && old_deprecations="0"
-          [ -z "$old_warnings" ] && old_warnings="0"
+          # Parse previous and new build stats
+          old_time=$(grep -oP '(?<=STAT:rough build time=)\d+(\.\d+)?(?=s)' OLD_OUTPUT.txt || echo "0")
+          new_time=$(grep -oP '(?<=STAT:rough build time=)\d+(\.\d+)?(?=s)' NEW_OUTPUT.txt || echo "0")
+
+          old_size=$(grep -oP '(?<=STAT:executable size=)\d+' OLD_OUTPUT.txt || echo "0")
+          new_size=$(grep -oP '(?<=STAT:executable size=)\d+' NEW_OUTPUT.txt || echo "0")
+
+          old_deprecations=$(grep -oP '(?<=Total deprecations:)\d+' OLD_OUTPUT.txt || echo "0")
+          new_deprecations=$(grep -oP '(?<=Total deprecations:)\d+' NEW_OUTPUT.txt || echo "0")
+
+          old_warnings=$(grep -oP '(?<=Total warnings:)\d+' OLD_OUTPUT.txt || echo "0")
+          new_warnings=$(grep -oP '(?<=Total warnings:)\d+' NEW_OUTPUT.txt || echo "0")
+
           # Calculate differences
           time_diff=$(awk "BEGIN {print $new_time - $old_time}")
           size_diff=$((new_size - old_size))
+          size_diff_mb=$(awk "BEGIN {print $size_diff / 1048576}")
           deprecation_diff=$((new_deprecations - old_deprecations))
           warning_diff=$((new_warnings - old_warnings))
-          # Convert $RUNTIME from ms to seconds for display
-          runtime_sec=$(awk "BEGIN {printf \"%.3f\", $RUNTIME/1000}")
-          # Build the final comment
-          echo "### 🔍 Build Statistics Diff" > comment.txt
-          echo "Comparing previous build statistics with the current build:" >> comment.txt
+
+          # Build concise comment
+          echo "### 🔍 Build Summary" > comment.txt
+          echo "**✅ Build Status:** Success" >> comment.txt
           echo "" >> comment.txt
-          echo "- **Execution Time:** \`$runtime_sec\` seconds (\`$RUNTIME\` ms)" >> comment.txt
-          echo "- **Previous:** \`$old_time\` s" >> comment.txt
-          echo "- **Current:** \`$new_time\` s" >> comment.txt
-          echo "- **Difference:** $time_diff s" >> comment.txt
+
+          # Show key metrics only if changed
+          if (( $(echo "$time_diff != 0" | bc -l) )); then
+            echo "**⏱️ Build Time:** $new_time s (was $old_time s)" >> comment.txt
+          fi
+          if [ "$size_diff" -ne 0 ]; then
+            echo "**📝 Executable Size:** $new_size bytes (was $old_size bytes)" >> comment.txt
+          fi
+          if [ "$RAM_USAGE" -gt 0 ]; then
+            echo "**💾 RAM Usage:** ${RAM_USAGE} MB" >> comment.txt
+          fi
+          if [ "$deprecation_diff" -ne 0 ]; then
+            echo "**⚠️ Deprecations:** $new_deprecations (was $old_deprecations)" >> comment.txt
+          fi
+          if [ "$warning_diff" -ne 0 ]; then
+            echo "**❗ Warnings:** $new_warnings (was $old_warnings)" >> comment.txt
+          fi
+
           echo "" >> comment.txt
-          echo "- **RAM Usage:** \`$RAM_USAGE\` MB" >> comment.txt
+          echo "---" >> comment.txt
           echo "" >> comment.txt
-          echo "- **Executable Size:** \`$new_size\` bytes" >> comment.txt
-          echo "- **Previous:** \`$old_size\` bytes" >> comment.txt
-          echo "- **Difference:** $size_diff bytes" >> comment.txt
+          echo "### 📊 Key Changes:" >> comment.txt
+
+          # List only changes that matter
+          [ "$time_diff" != "0" ] && echo "- ⏱️ Build Time Difference: ${time_diff}s" >> comment.txt
+          [ "$size_diff" -ne 0 ] && echo "- 📝 Executable Size Change: ${size_diff} bytes (~${size_diff_mb} MB)" >> comment.txt
+          [ "$deprecation_diff" -ne 0 ] && echo "- ⚠️ Deprecations Changed: ${deprecation_diff}" >> comment.txt
+          [ "$warning_diff" -ne 0 ] && echo "- ❗ Warnings Changed: ${warning_diff}" >> comment.txt
+
+          # Add link to full logs (optional)
           echo "" >> comment.txt
-          echo "- **Deprecations:** $new_deprecations" >> comment.txt
-          echo "- **Previous:** $old_deprecations" >> comment.txt
-          echo "- **Difference:** $deprecation_diff" >> comment.txt
-          echo "" >> comment.txt
-          echo "- **Warnings:** $new_warnings" >> comment.txt
-          echo "- **Previous:** $old_warnings" >> comment.txt
-          echo "- **Difference:** $warning_diff" >> comment.txt
-          echo "" >> comment.txt
-          # Optionally append output from your diff script:
-          ./ci/summary_comment_diff.sh OLD_OUTPUT.txt NEW_OUTPUT.txt >> comment.txt || echo "No diff from summary_comment_diff.sh."
-          # Include the entire NEW_OUTPUT in a collapsible block
-          echo "" >> comment.txt
-          echo "<details>" >> comment.txt
-          echo "<summary>Show Full NEW_OUTPUT</summary>" >> comment.txt
-          echo "" >> comment.txt
-          cat NEW_OUTPUT.txt >> comment.txt
-          echo "" >> comment.txt
-          echo "</details>" >> comment.txt
-          # Include the full build log in a collapsible block
-          echo "" >> comment.txt
-          echo "<details>" >> comment.txt
-          echo "<summary>Show Full Build Output</summary>" >> comment.txt
-          echo "" >> comment.txt
-          echo '```' >> comment.txt
-          cat FULL_OUTPUT.txt >> comment.txt
-          echo '```' >> comment.txt
-          echo "</details>" >> comment.txt
+          echo "[🔗 View Full Workflow Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> comment.txt
 
       - name: "Debug: Check comment.txt contents"
         run: cat comment.txt || echo "comment.txt is empty"
