@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Input files
 OLD_OUTPUT="$1"
 NEW_OUTPUT="$2"
